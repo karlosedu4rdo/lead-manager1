@@ -2,6 +2,9 @@ import type { Lead } from "./types"
 
 const STORAGE_KEY = "leads_data"
 
+// Server-side in-memory storage
+let serverLeads: Lead[] | null = null
+
 // Initialize with sample data if storage is empty
 function initializeLeads(): Lead[] {
   const initialLeads: Lead[] = [
@@ -58,8 +61,15 @@ function initializeLeads(): Lead[] {
 }
 
 export function getLeads(): Lead[] {
-  if (typeof window === "undefined") return []
+  // Server-side: use in-memory storage
+  if (typeof window === "undefined") {
+    if (serverLeads === null) {
+      serverLeads = initializeLeads()
+    }
+    return serverLeads
+  }
 
+  // Client-side: use localStorage
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
@@ -75,8 +85,13 @@ export function getLeads(): Lead[] {
 }
 
 export function saveLeads(leads: Lead[]): void {
-  if (typeof window === "undefined") return
+  // Server-side: update in-memory storage
+  if (typeof window === "undefined") {
+    serverLeads = leads
+    return
+  }
 
+  // Client-side: use localStorage
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(leads))
   } catch (error) {
